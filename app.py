@@ -4,7 +4,8 @@ import os
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QLabel, QPushButton,
     QFileDialog, QSlider, QVBoxLayout, QHBoxLayout,
-    QCheckBox, QGroupBox, QMessageBox
+    QCheckBox, QGroupBox, QMessageBox, QScrollArea,
+    QSizePolicy
 )
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QImage, QPixmap, QFont
@@ -16,7 +17,7 @@ from engine import VisualEngine
 class VisualApp(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("TouchDesigner-Style Visual Engine")
+        self.setWindowTitle("TouchVisual")
         self.resize(1200, 700)
 
         self.cap = None
@@ -125,27 +126,68 @@ class VisualApp(QWidget):
             QGroupBox {
                 border: 2px solid #800020;
                 border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
+                margin-top: 5px;
+                padding-top: 8px;
                 font-weight: bold;
                 color: #32cd32;
+                font-size: 11pt;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
                 left: 10px;
                 padding: 0 5px;
             }
+            QScrollArea {
+                border: none;
+            }
         """)
 
+    def create_slider_with_label(self, label_text, min_val, max_val, default_val, callback):
+        """Create a compact slider with label and value display"""
+        container = QHBoxLayout()
+        container.setSpacing(5)
+        
+        label = QLabel(label_text)
+        label.setMinimumWidth(100)
+        label.setMaximumWidth(100)
+        container.addWidget(label)
+        
+        slider = QSlider(Qt.Horizontal)
+        slider.setRange(min_val, max_val)
+        slider.setValue(default_val)
+        container.addWidget(slider)
+        
+        value_label = QLabel(str(default_val))
+        value_label.setMinimumWidth(45)
+        value_label.setMaximumWidth(45)
+        value_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        
+        # Update value label and call callback when slider changes
+        def update_label_and_callback(val):
+            value_label.setText(str(val))
+            callback(val)
+        slider.valueChanged.connect(update_label_and_callback)
+        
+        container.addWidget(value_label)
+        return container, slider
+    
     def init_ui(self):
         main_layout = QHBoxLayout()
+        main_layout.setSpacing(10)
+        main_layout.setContentsMargins(10, 10, 10, 10)
         
-        # Left panel - Controls
+        # Left panel - Controls (fixed width)
+        control_widget = QWidget()
+        control_widget.setMaximumWidth(320)
+        control_widget.setMinimumWidth(320)
         control_panel = QVBoxLayout()
+        control_panel.setSpacing(8)
+        control_panel.setContentsMargins(5, 5, 5, 5)
         
         # Video file section
         file_group = QGroupBox("Video File")
         file_layout = QVBoxLayout()
+        file_layout.setContentsMargins(8, 12, 8, 8)
         self.load_btn = QPushButton("📁 Load Video")
         self.load_btn.clicked.connect(self.load_video)
         file_layout.addWidget(self.load_btn)
@@ -153,20 +195,22 @@ class VisualApp(QWidget):
         control_panel.addWidget(file_group)
         
         # Effects menu section
-        effects_group = QGroupBox("Effects Menu")
+        effects_group = QGroupBox("Effects")
         effects_layout = QVBoxLayout()
+        effects_layout.setContentsMargins(8, 12, 8, 8)
+        effects_layout.setSpacing(5)
         
-        self.feedback_check = QCheckBox("Feedback Effect")
+        self.feedback_check = QCheckBox("Feedback")
         self.feedback_check.setChecked(True)
         self.feedback_check.stateChanged.connect(self.toggle_feedback)
         effects_layout.addWidget(self.feedback_check)
         
-        self.glow_check = QCheckBox("Glow Effect")
+        self.glow_check = QCheckBox("Glow")
         self.glow_check.setChecked(True)
         self.glow_check.stateChanged.connect(self.toggle_glow)
         effects_layout.addWidget(self.glow_check)
         
-        self.rgb_check = QCheckBox("RGB Split Effect")
+        self.rgb_check = QCheckBox("RGB Split")
         self.rgb_check.setChecked(True)
         self.rgb_check.stateChanged.connect(self.toggle_rgb)
         effects_layout.addWidget(self.rgb_check)
@@ -184,70 +228,86 @@ class VisualApp(QWidget):
         effects_group.setLayout(effects_layout)
         control_panel.addWidget(effects_group)
         
-        # Effect parameters section
-        params_group = QGroupBox("Effect Parameters")
-        params_layout = QVBoxLayout()
+        # Effect parameters section - Scrollable
+        params_group = QGroupBox("Parameters")
+        params_container = QVBoxLayout()
+        params_container.setContentsMargins(8, 12, 8, 8)
+        params_container.setSpacing(6)
         
-        # Feedback decay
-        feedback_label = QLabel("Feedback Decay:")
-        params_layout.addWidget(feedback_label)
-        self.feedback_slider = QSlider(Qt.Horizontal)
-        self.feedback_slider.setRange(50, 99)
-        self.feedback_slider.setValue(90)
-        self.feedback_slider.valueChanged.connect(self.update_feedback)
-        params_layout.addWidget(self.feedback_slider)
+        # Feedback parameters
+        feedback_slider_layout, self.feedback_slider = self.create_slider_with_label(
+            "Feedback:", 50, 99, 90, self.update_feedback
+        )
+        params_container.addLayout(feedback_slider_layout)
         
-        # Glow strength
-        glow_label = QLabel("Glow Strength:")
-        params_layout.addWidget(glow_label)
-        self.glow_slider = QSlider(Qt.Horizontal)
-        self.glow_slider.setRange(0, 300)
-        self.glow_slider.setValue(150)
-        self.glow_slider.valueChanged.connect(self.update_glow)
-        params_layout.addWidget(self.glow_slider)
+        # Glow parameters
+        glow_slider_layout, self.glow_slider = self.create_slider_with_label(
+            "Glow:", 0, 300, 150, self.update_glow
+        )
+        params_container.addLayout(glow_slider_layout)
         
-        # RGB shift
-        rgb_label = QLabel("RGB Shift:")
-        params_layout.addWidget(rgb_label)
-        self.rgb_slider = QSlider(Qt.Horizontal)
-        self.rgb_slider.setRange(0, 50)
-        self.rgb_slider.setValue(10)
-        self.rgb_slider.valueChanged.connect(self.update_rgb)
-        params_layout.addWidget(self.rgb_slider)
+        # RGB parameters
+        rgb_slider_layout, self.rgb_slider = self.create_slider_with_label(
+            "RGB Shift:", 0, 50, 10, self.update_rgb
+        )
+        params_container.addLayout(rgb_slider_layout)
         
-        # Object tracking trail length
-        trail_label = QLabel("Tracking Trail Length:")
-        params_layout.addWidget(trail_label)
-        self.trail_slider = QSlider(Qt.Horizontal)
-        self.trail_slider.setRange(5, 50)
-        self.trail_slider.setValue(20)
-        self.trail_slider.valueChanged.connect(self.update_trail)
-        params_layout.addWidget(self.trail_slider)
+        # Object tracking parameters
+        trail_slider_layout, self.trail_slider = self.create_slider_with_label(
+            "Trail Length:", 5, 50, 20, self.update_trail
+        )
+        params_container.addLayout(trail_slider_layout)
         
-        # Blob tracking min area
-        blob_min_label = QLabel("Blob Min Area:")
-        params_layout.addWidget(blob_min_label)
-        self.blob_min_slider = QSlider(Qt.Horizontal)
-        self.blob_min_slider.setRange(50, 1000)
-        self.blob_min_slider.setValue(100)
-        self.blob_min_slider.valueChanged.connect(self.update_blob_min)
-        params_layout.addWidget(self.blob_min_slider)
+        # Blob tracking parameters
+        blob_min_slider_layout, self.blob_min_slider = self.create_slider_with_label(
+            "Blob Min:", 50, 1000, 100, self.update_blob_min
+        )
+        params_container.addLayout(blob_min_slider_layout)
         
-        # Blob tracking max area
-        blob_max_label = QLabel("Blob Max Area:")
-        params_layout.addWidget(blob_max_label)
-        self.blob_max_slider = QSlider(Qt.Horizontal)
-        self.blob_max_slider.setRange(1000, 100000)
-        self.blob_max_slider.setValue(50000)
-        self.blob_max_slider.valueChanged.connect(self.update_blob_max)
-        params_layout.addWidget(self.blob_max_slider)
+        blob_max_slider_layout, self.blob_max_slider = self.create_slider_with_label(
+            "Blob Max:", 1000, 100000, 50000, self.update_blob_max
+        )
+        params_container.addLayout(blob_max_slider_layout)
         
-        params_group.setLayout(params_layout)
+        # Create scrollable area for parameters
+        scroll_widget = QWidget()
+        scroll_widget.setLayout(params_container)
+        scroll_area = QScrollArea()
+        scroll_area.setWidget(scroll_widget)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollBar:vertical {
+                background-color: #2d2d2d;
+                width: 10px;
+                border-radius: 5px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #800020;
+                border-radius: 5px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #a00030;
+            }
+        """)
+        
+        params_group_layout = QVBoxLayout()
+        params_group_layout.setContentsMargins(0, 0, 0, 0)
+        params_group_layout.addWidget(scroll_area)
+        params_group.setLayout(params_group_layout)
         control_panel.addWidget(params_group)
         
         # Control buttons
         control_btn_group = QGroupBox("Controls")
         control_btn_layout = QVBoxLayout()
+        control_btn_layout.setContentsMargins(8, 12, 8, 8)
+        control_btn_layout.setSpacing(8)
         
         self.start_btn = QPushButton("▶ Start")
         self.start_btn.clicked.connect(self.start)
@@ -266,13 +326,16 @@ class VisualApp(QWidget):
         control_btn_group.setLayout(control_btn_layout)
         control_panel.addWidget(control_btn_group)
         
-        control_panel.addStretch()
+        control_widget.setLayout(control_panel)
+        main_layout.addWidget(control_widget)
         
         # Right panel - Video display
         video_panel = QVBoxLayout()
+        video_panel.setSpacing(10)
         self.video_label = QLabel("Load a video to begin")
         self.video_label.setAlignment(Qt.AlignCenter)
         self.video_label.setMinimumSize(800, 600)
+        self.video_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.video_label.setStyleSheet("""
             QLabel {
                 background-color: #0d0d0d;
@@ -285,11 +348,10 @@ class VisualApp(QWidget):
         # Status label
         self.status_label = QLabel("Ready")
         self.status_label.setAlignment(Qt.AlignCenter)
-        self.status_label.setStyleSheet("color: #32cd32; font-weight: bold;")
+        self.status_label.setStyleSheet("color: #32cd32; font-weight: bold; padding: 5px;")
+        self.status_label.setMaximumHeight(30)
         video_panel.addWidget(self.status_label)
         
-        # Combine layouts
-        main_layout.addLayout(control_panel, 1)
         main_layout.addLayout(video_panel, 3)
         
         self.setLayout(main_layout)

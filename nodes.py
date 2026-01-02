@@ -216,7 +216,7 @@ class ObjectTrackingNode(Node):
 # =========================
 class BlobTrackingNode(Node):
     def __init__(self, min_area=100, max_area=50000, show_contours=True, 
-                 show_centroids=True, color=(255, 0, 255)):
+                 show_centroids=True, color=(255, 255, 255)):
         self.min_area = min_area
         self.max_area = max_area
         self.show_contours = show_contours
@@ -256,7 +256,7 @@ class BlobTrackingNode(Node):
             if self.min_area <= area <= self.max_area:
                 # Draw contour
                 if self.show_contours:
-                    cv2.drawContours(result, [contour], -1, self.color, 2)
+                    cv2.drawContours(result, [contour], -1, self.color, 1)
                 
                 # Calculate centroid
                 M = cv2.moments(contour)
@@ -270,10 +270,10 @@ class BlobTrackingNode(Node):
                     
                     # Draw bounding box
                     x, y, w, h = cv2.boundingRect(contour)
-                    cv2.rectangle(result, (x, y), (x + w, y + h), self.color, 2)
+                    cv2.rectangle(result, (x, y), (x + w, y + h), self.color, 1)
                     
                     # Draw area text
                     cv2.putText(result, f"{int(area)}", (x, y - 10),
-                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, self.color, 2)
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, self.color, 1)
         
         return result
