@@ -48,4 +48,67 @@ This project demonstrates how generative visuals, feedback systems, motion analy
 ---
 
 ## Project Structure
+TouchVisual/
+│
+├── app.py # Desktop GUI (main entry point)
+├── engine.py # VisualEngine pipeline logic
+├── nodes.py # All visual effect nodes
+├── requirements.txt
+└── README.md
+
+## Installation
+
+### 1. Install Dependencies
+pip install -r requirements.txt
+
+
+### 2. Run the Application
+python app.py
+
+
+---
+
+## Usage
+
+1. Click **Load Video**
+2. Press **Start**
+3. Adjust visual parameters in real time
+4. Press **Stop** to pause playback
+
+
+---
+
+## Design Goals
+
+- Recreate TouchDesigner-style workflows in Python
+- Emphasize modularity and extensibility
+- Keep the code beginner-readable yet professional
+- Build a strong creative-coding portfolio project
+
+---
+
+## Possible Extensions
+
+- Audio-reactive visuals (FFT-driven effects)
+- Live webcam input
+- OSC / MIDI control
+- Perlin noise-based distortion
+- Motion tracking-driven visuals
+- Visual node graph editor
+- GPU acceleration (CUDA / GLSL)
+
+---
+
+## Use Cases
+
+- Creative coding experiments
+- Generative visuals
+- VJ tools and visualizers
+- Motion graphics prototyping
+- Computer vision + art projects
+
+---
+
+
+
 
