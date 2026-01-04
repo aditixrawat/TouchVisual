@@ -1,6 +1,6 @@
 # TouchVisual
 
-A **node-based, ]visual processing engine** built in Python using **OpenCV, NumPy, and PyQt**, inspired by **TouchDesigner**.
+A **node-based, visual processing engine** built in Python using **OpenCV, NumPy, and PyQt**, inspired by **TouchDesigner**.
 
 This project demonstrates how generative visuals, feedback systems, motion analysis, and creative-coding workflows can be implemented **programmatically without TouchDesigner**.
 
